@@ -1,0 +1,20 @@
+services:
+  telegram-personal-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-personal-api
+    restart: unless-stopped
+    environment:
+      - PORT=3200
+      # Bắt buộc — thiếu là container thoát ngay lúc khởi động, không phải chờ tới lần quét QR.
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:?can TELEGRAM_API_ID tu my.telegram.org}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:?can TELEGRAM_API_HASH tu my.telegram.org}
+      - UPSTREAM_BASE_URL=${UPSTREAM_BASE_URL:-http://localhost:5000}
+      - UPSTREAM_WEBHOOK_PATH=${UPSTREAM_WEBHOOK_PATH:-/api/v1/webhook/telegram-personal}
+      - UPSTREAM_SESSIONS_PATH=${UPSTREAM_SESSIONS_PATH:-/api/v1/channels/telegram-personal/internal/sessions}
+      - SYSTEM_KEY=${SYSTEM_KEY:-}
+      # Upstream gọi ngược về đây để lấy ảnh/tệp — xem README, mục "Phụ thuộc hai chiều".
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://telegram-personal-api:3200}
+    ports:
+      - "3200:3200"

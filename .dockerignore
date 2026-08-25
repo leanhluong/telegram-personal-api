@@ -1,0 +1,12 @@
+node_modules
+dist
+npm-debug.log
+.git
+.github
+.env
+*.log
+**/*.test.ts
+README.md
+docs
+scripts
+docker-compose.yml

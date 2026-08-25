@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "rootDir": "src",
+    "outDir": "dist",
+
+    // ── strict vừa ──────────────────────────────────────────────────────────
+    // Bật strict cho code mình viết. Dữ liệu từ Telegram (đối tượng GramJS: Message,
+    // entity, media…) được khai `TgRaw` TƯỜNG MINH ở src/types.ts — chúng là union
+    // rất rộng, phân biệt bằng `className` lúc chạy, nên ép kiểu cứng ở ranh giới
+    // chỉ tạo cảm giác an toàn giả.
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": false
+  },
+  "include": ["src/**/*.ts"]
+}
