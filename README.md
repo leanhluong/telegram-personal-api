@@ -83,6 +83,8 @@ mã lỗi, payload webhook và các bẫy đã biết.
 | Phiên | `/sessions` | QR đăng nhập, mật khẩu hai lớp, trạng thái, sức khoẻ phiên |
 | Tin nhắn | `/sessions/:accountId/...` | Gửi text, tệp, đang gõ, cảm xúc, thu hồi, đánh dấu đã đọc |
 | Đồng bộ | `/sessions/:accountId/...` | Liệt kê hội thoại, nạp lịch sử về upstream |
+| Danh bạ | `/sessions/:accountId/contacts`, `/resolve` | Đọc danh bạ, thêm liên hệ, tra người để mở hội thoại mới |
+| Nhóm | `/sessions/:accountId/groups/:groupId/...` | Thành viên, thêm/xoá thành viên, đổi tên |
 | Tệp | `/avatars`, `/media` | Phục vụ ảnh đại diện và tệp đính kèm cho upstream |
 
 > **Service không xác thực request đến.** Ai gọi được cổng 3200 là gửi được tin dưới danh nghĩa

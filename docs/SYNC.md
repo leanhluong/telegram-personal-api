@@ -9,13 +9,21 @@ sang, để lần sau chỉ cần lấy phần mới thay vì đoán.
 |---|---|
 | Nguồn | `nextx-telegram-bridge` (private) |
 | Nhánh | `develop` |
-| Commit đã bê | **`d3a4413a60ab14ed24e8cb43190eee81b443ed9a`** |
+| Commit đã bê | **`c49bc9d`** (merge PR #3) |
 | Ngày | 25/08/2026 |
-| Nội dung tại mốc | MTProto + QR login + mật khẩu 2 lớp + listener + nạp lịch sử + gửi tệp/typing/reactions/unsend |
+| Nội dung tại mốc | MTProto + QR login + mật khẩu 2 lớp + listener + nạp lịch sử + gửi tệp/typing/reactions/unsend + **danh bạ & quản lý nhóm** |
 
-Mốc này gồm cả `bda56f5 feat: send files, typing, reactions and unsend over MTProto` — commit nằm
-trên `develop` nhưng **chưa có** trong working copy lúc bắt đầu copy. Đó là lý do file này tồn tại:
-chép từ thư mục làm việc thay vì từ nhánh đã merge là cách bỏ sót tính năng mà không ai nhận ra.
+### Đã bê những đợt nào
+
+| Commit | Nội dung | Bê ngày |
+|---|---|---|
+| `43fffef` (PR #1) | Nền: MTProto, QR login, listener, nạp lịch sử | 25/08 |
+| `bda56f5` (PR #2) | Gửi tệp, đang gõ, cảm xúc, thu hồi | 25/08 |
+| `fd62c75` (PR #3) | Danh bạ, thêm liên hệ, quản lý nhóm (+7 endpoint) | 25/08 |
+
+⚠️ **Bẫy đã dính một lần:** working copy của repo gốc đứng ở nhánh `agent/*` **cũ hơn `develop`**,
+thiếu hẳn `bda56f5`. Chép từ thư mục làm việc thay vì từ nhánh đã merge là cách bỏ sót tính năng mà
+không ai nhận ra. **Luôn `git archive origin/develop`**, đừng copy thư mục.
 
 ## Lần sau đồng bộ thế nào
 
@@ -24,14 +32,15 @@ cd <đường-dẫn>/nextx-telegram-bridge
 git fetch origin
 
 # 1. Có gì mới kể từ mốc?
-git log --oneline d3a4413..origin/develop
+git log --oneline c49bc9d..origin/develop
 
-# 2. Chúng đụng vào file nào?
-git diff --stat d3a4413 origin/develop
+# 2. Chúng đụng vào file nào? Có endpoint mới không?
+git diff --stat c49bc9d origin/develop
+git diff c49bc9d origin/develop -- src/ | grep -E "^\+.*router\.(get|post|put|delete)\("
 
 # 3. Xem thay đổi thật để bê tay sang (KHÔNG cherry-pick được: bên này đã là TypeScript
 #    và đã bóc hết phần dính hệ thống nội bộ)
-git diff d3a4413 origin/develop -- src/
+git diff c49bc9d origin/develop -- src/
 ```
 
 Bê xong thì **cập nhật commit ở bảng trên** — mốc sai còn tệ hơn không có mốc.

@@ -21,11 +21,13 @@ Tài liệu đầy đủ cho toàn bộ API của service. Mọi mô tả dướ
 6. [Sessions — phiên đăng nhập](#6-sessions--phiên-đăng-nhập)
 7. [Messages — gửi tin](#7-messages--gửi-tin)
 8. [Sync — hội thoại và lịch sử](#8-sync--hội-thoại-và-lịch-sử)
-9. [Media — ảnh và tệp](#9-media--ảnh-và-tệp)
-10. [Webhook service GỬI RA](#10-webhook-service-gửi-ra)
-11. [Endpoint upstream PHẢI cung cấp](#11-endpoint-upstream-phải-cung-cấp)
-12. [Giới hạn đã biết](#12-giới-hạn-đã-biết)
-13. [Bảo mật](#bảo-mật)
+9. [Contacts — danh bạ](#9-contacts--danh-bạ)
+10. [Groups — quản lý nhóm](#10-groups--quản-lý-nhóm)
+11. [Media — ảnh và tệp](#11-media--ảnh-và-tệp)
+12. [Webhook service GỬI RA](#12-webhook-service-gửi-ra)
+13. [Endpoint upstream PHẢI cung cấp](#13-endpoint-upstream-phải-cung-cấp)
+14. [Giới hạn đã biết](#14-giới-hạn-đã-biết)
+15. [Bảo mật](#bảo-mật)
 
 ---
 
@@ -42,7 +44,7 @@ Tài liệu đầy đủ cho toàn bộ API của service. Mọi mô tả dướ
 | upstream | Hệ thống của bạn — nơi service đẩy tin về, nơi cấp phiên để khôi phục, và nơi gọi ngược vào lấy ảnh/tệp. |
 
 **Phiên nằm trong RAM.** Restart service là mất hết phiên đang giữ; service sẽ tự gọi upstream lấy
-`sessionString` để đăng nhập lại (xem [mục 11](#11-endpoint-upstream-phải-cung-cấp)).
+`sessionString` để đăng nhập lại (xem [mục 13](#13-endpoint-upstream-phải-cung-cấp)).
 
 ---
 
@@ -55,7 +57,7 @@ Tài liệu đầy đủ cho toàn bộ API của service. Mọi mô tả dướ
    ├─ status = password_required         → POST /sessions/:qrToken/password
    └─ status = confirmed                 → nhận accountId + sessionString (LƯU LẠI!)
 4. Dùng accountId cho mọi API còn lại
-5. Tin đến tự chảy về upstream qua webhook (mục 10)
+5. Tin đến tự chảy về upstream qua webhook (mục 12)
 6. POST /sessions/:accountId/sync        → nạp lịch sử cũ (tuỳ chọn)
 ```
 
@@ -120,7 +122,7 @@ Xuất hiện trong payload webhook. Trường có mặt tuỳ theo `type`:
 { "type": "unknown", "className": "MessageMediaPoll", "url": "..." }
 ```
 
-> `url` trỏ về **chính service này**, không phải CDN Telegram — xem [mục 9](#9-media--ảnh-và-tệp).
+> `url` trỏ về **chính service này**, không phải CDN Telegram — xem [mục 11](#11-media--ảnh-và-tệp).
 > Nó chỉ tải được khi phiên còn sống.
 
 ### PeerKind
@@ -419,7 +421,126 @@ Nạp lịch sử về upstream. **Đây là thứ đường Bot vĩnh viễn kh
 
 ---
 
-## 9. Media — ảnh và tệp
+## 9. Contacts — danh bạ
+
+> **"Kết bạn" của Telegram không giống Zalo.** Không có lời mời phải chờ đối phương đồng ý: thêm
+> người vào danh bạ là việc **đơn phương**, và nhắn được cho người lạ ngay cả khi không thêm — miễn
+> là biết username, hoặc họ chưa chặn tin từ người lạ. Vì vậy **không có** endpoint `accept`.
+
+### `GET /sessions/:accountId/contacts`
+
+Toàn bộ danh bạ.
+
+**Response `200`**
+
+```jsonc
+{
+  "contacts": [{
+    "peerId": "111222333",
+    "userId": "111222333",
+    "kind": "user",
+    "displayName": "Nguyễn Văn A",
+    "username": "nguyenvana",
+    "phone": "+84...",
+    "avatarUrl": "http://.../avatars/{acc}/{peer}",
+    "isBot": false
+  }]
+}
+```
+
+---
+
+### `POST /sessions/:accountId/contacts`
+
+Thêm một người vào danh bạ.
+
+**Body** — cần **`phone` HOẶC `username`**:
+
+| Field | Kiểu | Mô tả |
+|---|---|---|
+| `username` | string | Chấp nhận cả `@ten` lẫn `ten` |
+| `phone` | string | Số điện thoại |
+| `firstName` / `lastName` | string | Tên lưu trong danh bạ; mặc định lấy từ Telegram (hoặc chính số điện thoại) |
+
+**Response `200`:** `{ "contact": { ...như trên } }`
+
+**Lỗi:**
+- `400` — không truyền cả `phone` lẫn `username`
+- `404` — `Không tìm thấy @username`, hoặc *"Số này chưa có tài khoản Telegram, hoặc chủ tài khoản
+  không cho tìm bằng số điện thoại"*
+
+> **`404` cho số lạ là cố ý.** Telegram trả danh sách **rỗng** chứ không báo lỗi khi số không có tài
+> khoản — trả `200` kèm danh bạ trống thì người dùng tưởng đã thêm xong. Ở đây nói thẳng lý do.
+
+---
+
+### `POST /sessions/:accountId/resolve`
+
+Tra một người để **mở hội thoại mới**, **không** thêm vào danh bạ.
+
+**Body** — cần một trong ba: `username` · `phone` · `userId`
+
+**Response `200`:** `{ "contact": { ... } }`
+
+**Lỗi:** `400` không truyền gì · `404` không tra được.
+
+> Khác `/contacts` ở chỗ không để lại dấu vết trong danh bạ người dùng. Telegram cho nhắn người lạ,
+> nên bắt thêm danh bạ trước là ép làm một việc thừa.
+>
+> Đường `userId` **chỉ ra kết quả nếu phiên đã từng thấy người này** — MTProto cần access hash, mà
+> hash chỉ có sau khi phiên gặp họ ít nhất một lần.
+
+---
+
+## 10. Groups — quản lý nhóm
+
+> ⚠️ **Telegram có HAI loại nhóm, mỗi loại một bộ lời gọi khác nhau** — nhóm thường (`Chat`) và siêu
+> nhóm/kênh (`Channel`). Service tự đọc loại từ entity **tại thời điểm gọi** và chọn đúng bộ, nên
+> phía bạn không phải quan tâm. Lý do phải làm vậy: một nhóm thường **tự động** thành siêu nhóm khi
+> đông lên, nghĩa là cùng một nhóm hôm nay đi đường này, tháng sau đường kia. Gọi nhầm bộ thì
+> Telegram trả `PEER_ID_INVALID` — thông báo chẳng liên quan gì tới nguyên nhân thật.
+
+### `GET /sessions/:accountId/groups/:groupId/members`
+
+**Response `200`**
+
+```jsonc
+{
+  "members": [{ "userId": "1", "displayName": "Ninh", "username": "ninh", "isBot": false, "...": "" }],
+  "total": 42
+}
+```
+
+> **`members` có thể ít hơn `total`** — service lấy tối đa 200 thành viên mỗi lần. Luôn đọc `total`
+> để biết mình đang nhìn một phần; im lặng cắt bớt là cách hỏng tệ nhất.
+
+---
+
+### `POST /sessions/:accountId/groups/:groupId/members`
+
+Thêm thành viên. **Body:** `userId` ✅ · **Response `200`:** `{ "ok": true }`
+
+> Người mới **không** đọc được tin cũ (`fwdLimit: 0`). Cho đọc ngược lịch sử là chuyện không ai bấm
+> nút để xin.
+
+---
+
+### `DELETE /sessions/:accountId/groups/:groupId/members/:userId`
+
+Xoá thành viên. **Response `200`:** `{ "ok": true }`
+
+> Với siêu nhóm, service dùng `kickParticipant` — nó gỡ lệnh cấm ngay sau khi xoá, nên người bị xoá
+> **vẫn quay lại được nếu được mời**. Đây là xoá, không phải cấm vĩnh viễn.
+
+---
+
+### `POST /sessions/:accountId/groups/:groupId/rename`
+
+**Body:** `title` ✅ (string) · **Response `200`:** `{ "ok": true, "title": "Tên mới" }`
+
+---
+
+## 11. Media — ảnh và tệp
 
 Hai đường này **upstream gọi vào**, không phải trình duyệt.
 
@@ -441,7 +562,7 @@ Trả tệp đính kèm của một tin, `Content-Type` theo tệp.
 
 ---
 
-## 10. Webhook service GỬI RA
+## 12. Webhook service GỬI RA
 
 Service POST vào **một đường duy nhất** (khác các kênh có nhiều loại sự kiện):
 
@@ -488,7 +609,7 @@ Headers: Content-Type: application/json, X-System-Key: <SYSTEM_KEY>
 
 ---
 
-## 11. Endpoint upstream PHẢI cung cấp
+## 13. Endpoint upstream PHẢI cung cấp
 
 Để phiên tự khôi phục sau restart (không phải quét QR lại), upstream cần expose:
 
@@ -520,13 +641,13 @@ thiết bị này ra từ app.
 
 ---
 
-## 12. Giới hạn đã biết
+## 14. Giới hạn đã biết
 
 | Giới hạn | Hệ quả | Cách sống chung |
 |---|---|---|
 | Chưa từng chạy production | Bản gốc mới quét QR thật một lần trên môi trường thử | Chạy thử kỹ trước khi giao cho khách |
 | Webhook fire-and-forget | Upstream 5xx / restart ⇒ trượt tin | Gọi `/sync` để lấy lại — Telegram còn giữ lịch sử |
-| Phiên nằm trong RAM | Restart mất hết phiên | Hiện thực endpoint ở [mục 11](#11-endpoint-upstream-phải-cung-cấp) |
+| Phiên nằm trong RAM | Restart mất hết phiên | Hiện thực endpoint ở [mục 13](#13-endpoint-upstream-phải-cung-cấp) |
 | Tệp chỉ tải được khi phiên sống | Lưu URL rồi tải sau sẽ hỏng | Upstream sao lưu về kho của mình ngay |
 | Tệp > 25 MB | `/media` trả `413` | Không lấy được qua đường này |
 | MTProto cho tài khoản người dùng | Telegram có thể `FLOOD_WAIT` hoặc khoá tài khoản | Đừng gọi dồn dập; tôn trọng `FLOOD_WAIT` |

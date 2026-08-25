@@ -104,6 +104,15 @@ export interface PeerDescriptor {
   avatarUrl: string | null;
 }
 
+/**
+ * Một người trong danh bạ / thành viên nhóm. Là `PeerDescriptor` cộng thêm vài trường chỉ có ở
+ * người dùng thật (`userId` trùng `peerId` nhưng giữ tên riêng cho nơi gọi khỏi phải suy).
+ */
+export interface ContactDescriptor extends PeerDescriptor {
+  userId: string | null;
+  isBot: boolean;
+}
+
 export interface SelfDescriptor {
   accountId: string | null;
   displayName: string;

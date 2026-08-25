@@ -5,6 +5,8 @@ import { sessionsRouter } from './routes/sessions.js';
 import { messagesRouter } from './routes/messages.js';
 import { syncRouter } from './routes/sync.js';
 import { mediaRouter } from './routes/media.js';
+import { contactsRouter } from './routes/contacts.js';
+import { groupsRouter } from './routes/groups.js';
 import { restoreAll } from './sessionRestore.js';
 import { errMsg } from './errors.js';
 
@@ -33,6 +35,8 @@ app.get('/health', (_req, res) => {
 app.use('/sessions', sessionsRouter(cfg));
 app.use('/sessions', messagesRouter(cfg));
 app.use('/sessions', syncRouter(cfg));
+app.use('/sessions', contactsRouter(cfg));
+app.use('/sessions', groupsRouter(cfg));
 app.use('/', mediaRouter(cfg));
 
 startJanitor();
